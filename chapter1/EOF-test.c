@@ -2,7 +2,7 @@
 
 /* verifieing that the espression getchar() != EOF is 0 or 1 */
 
-main()
+int main(void)
 {
   printf("%i", getchar() != EOF);
 }

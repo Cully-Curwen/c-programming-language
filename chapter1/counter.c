@@ -2,7 +2,7 @@
 
 /* count the number of blanks, tabs and new lines */
 
-main()
+int main(void)
 {
   int c, nb, nt, nl; /* Set number blanks: nb, number tabs: nt, number new lines: nl */
 

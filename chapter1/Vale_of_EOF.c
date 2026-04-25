@@ -2,7 +2,7 @@
 
 /* printing value of EOF */
 
-main()
+int main(void)
 {
   printf("%i", EOF);
 }

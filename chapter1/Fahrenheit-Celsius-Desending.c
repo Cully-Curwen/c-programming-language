@@ -3,7 +3,7 @@
 /* Fahrenheit-Celsius temperature table desending
     from Fahr = 300, 280, ...., 0 */
 
-main()
+int main(void)
 {
   int fahr;
   printf("Fahrenheit-Celsius Desending\n");
