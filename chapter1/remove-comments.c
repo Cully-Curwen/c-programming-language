@@ -56,9 +56,9 @@ void remove_comments(char s[], int len, int lim) {
         char r[lim];
 
         for (i = j = 0; i < len; ++i) {
-                if (s[i] == '\'' && !sFlag && !comment)
+                if (s[i] == '\'' && !sFlag && !comment && s[i-1] != '\\')
                         cFlag = !cFlag;
-                if (s[i] == '\"' && !cFlag && !comment)
+                if (s[i] == '\"' && !cFlag && !comment && s[i-1] != '\\')
                         sFlag = !sFlag;
                 if (s[i] == '*' && s[i-1] == '/' && !cFlag && !sFlag) {
                         comment = 1;
