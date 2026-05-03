@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>    /* for atof() */
+#include <string.h>
+#include <math.h>
 
 #define MAXOP   100    /* max size of operand or operator */
 #define NUMBER  '0'    /* signal that a number was found */
+#define NAME    'n'    /* signal that a named function was found */
 
 int getop(char []);
 void push(double);
@@ -42,6 +45,18 @@ int main(void) {
                                 push((int)pop() % (int)op2);
                         else
                                 printf("error: zero divisor\n");
+                        break;
+                case NAME:
+                        if (strcmp(s, "sin") == 0)
+                                push(sin(pop()));
+                        else if (strcmp(s, "exp") == 0)
+                                push(exp(pop()));
+                        else if (strcmp(s, "pow") == 0) {
+                                op2 = pop();
+                                push(pow(pop(), op2));
+                        }
+                        else
+                                printf("error: unknown function %s\n", s);
                         break;
                 case '\n':
                         printf("\t%.8g\n", pop());
@@ -90,7 +105,7 @@ int getop(char s[]) {
         while ((s[0] = c = getch()) == ' ' || c == '\t')
                 ;
         s[1] = '\0';
-        if (!isdigit(c) && c != '.' && c != '-') {
+        if (!isdigit(c) && c != '.' && c != '-' && !isalpha(c)) {
                 return c;       /* not a number or - */
         }
         i = 0;
@@ -101,6 +116,14 @@ int getop(char s[]) {
                 } else {
                         s[++i] = c;
                 }
+        }
+        if (isalpha(c)) {        /* collect letter part */
+                while (isalpha(s[++i] = c = getch()))
+                        ;
+                s[i] = '\0';
+                if (c != EOF)
+                        ungetch(c);
+                return NAME;
         }
         if (isdigit(c))         /* collect integer part */
                 while (isdigit(s[++i] = c = getch()))
