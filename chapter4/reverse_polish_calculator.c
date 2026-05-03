@@ -173,6 +173,20 @@ void ungetch(int c) {
                 printf("ungetch: too many characters\n");
         else
                 buf[bufp++] = c;
+        return;
+}
+
+/* ungets: push string back onto input */
+void ungets(char s[]) {
+        int i, len;
+
+        len = strlen(s);
+        if (bufp >= BUFSIZE - len)
+                printf("ungets: string to large\n");
+        else
+                for (i = len - 1; i >= 0; i--)
+                        ungetch(s[i]);
+        return;
 }
 
 /* print: print the top element of the stack, without poping */
