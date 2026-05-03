@@ -157,9 +157,16 @@ int getop(char s[]) {
 }
 
 /* getch and ungetch */
+/* ex 4-8 if there is only ever 1 character of push back there is no need for a buf[]
+ * can be held in a variable char buf;
+ * bufp and BUFSIZE would then not be needed, aswell as less memory being allocated
+ */
 #define BUFSIZE 100
 
-char buf[BUFSIZE];      /* buffer for ungetch */
+/* EOF is -1 so depending on machine char migtht not store -1 correctly
+ * by using int it cannot be corvesion on storing
+ */
+int buf[BUFSIZE];      /* buffer for ungetch */
 int bufp = 0;           /* next free position in buf */
 
 /* getch: get a (possibly pushed back) character */
