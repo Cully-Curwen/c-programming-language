@@ -132,3 +132,48 @@ void ungetch(int c) {
         else
                 buf[bufp++] = c;
 }
+
+/* print: print the top element of the stack, without poping */
+void print(void) {
+        if (sp > 0)
+                printf("%g\n", val[sp-1]);
+        else {
+                printf("error: stack empty\n");
+        }
+        return;
+}
+
+/* duplicate: duplicate the top element of the stack */
+void duplicate(void) {
+        if (sp > 0 && sp < MAXVAL) {
+                val[sp] = val[sp-1];
+                sp++;
+        } else if (sp == 0) {
+                printf("error: stack empty, can't duplicate\n");
+        } else {
+                printf("error: stack full, can't duplicate\n");
+        }
+        return;
+}
+
+/* swap: swaps the top two element of the stack */
+void swap(void) {
+        double val1, val2;
+
+        if (sp >= 2) {
+                val1 = pop();
+                val2 = pop();
+                push(val1);
+                push(val2);
+        } else {
+                printf("error: less than 2 element in stack, can't swap\n");
+        }
+        return;
+}
+
+/* clear: clear the stack */
+void clear(void) {
+        sp = 0;
+        return;
+}
+
