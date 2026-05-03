@@ -2,10 +2,12 @@
 #include <stdlib.h>    /* for atof() */
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 
-#define MAXOP   100    /* max size of operand or operator */
-#define NUMBER  '0'    /* signal that a number was found */
-#define NAME    'n'    /* signal that a named function was found */
+#define MAXOP   100     /* max size of operand or operator */
+#define NUMBER  '0'     /* signal that a number was found */
+#define NAME    'n'     /* signal that a named function was found */
+#define VARIABLE 'v'    /* signal that a variable has been found */
 
 int getop(char []);
 void push(double);
@@ -16,6 +18,9 @@ int main(void) {
         int type;
         double op2;
         char s[MAXOP];
+        int v;
+        double vars[26];
+        double last;
 
         while ((type = getop(s)) != EOF) {
                 switch (type) {
@@ -58,8 +63,22 @@ int main(void) {
                         else
                                 printf("error: unknown function %s\n", s);
                         break;
+                case VARIABLE:
+                        v = toupper(s[0]) - 'A';
+                        push(vars[v]);
+                        break;
+                case '=':
+                        op2 = pop();
+                        vars[v] = (vars[v] == op2) ? pop() : op2;
+                        printf("%c <= ", v + 'A');
+                        push(vars[v]);
+                        break;
+                case '_':
+                        push(last);
+                        break;
                 case '\n':
-                        printf("\t%.8g\n", pop());
+                        last = pop();
+                        printf("\t%.8g\n", last);
                         break;
                 default:
                         printf("error: unknown command %s\n", s);
@@ -123,7 +142,7 @@ int getop(char s[]) {
                 s[i] = '\0';
                 if (c != EOF)
                         ungetch(c);
-                return NAME;
+                return (i == 1) ? VARIABLE : NAME;
         }
         if (isdigit(c))         /* collect integer part */
                 while (isdigit(s[++i] = c = getch()))
