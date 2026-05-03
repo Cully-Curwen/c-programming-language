@@ -52,7 +52,7 @@ int getint(int *pn)
         sign = (c == '-') ? -1 : 1;
         if (c == '+' || c == '-') {
                 c = getch();
-                if (c != isdigit(c)) {
+                if (isdigit(c)) {
                         ungetch(c);
                         (sign == -1) ? ungetch('-') : ungetch('+');
                         return 0;
