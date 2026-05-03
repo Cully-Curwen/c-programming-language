@@ -8,8 +8,10 @@
 #define NUMBER  '0'     /* signal that a number was found */
 #define NAME    'n'     /* signal that a named function was found */
 #define VARIABLE 'v'    /* signal that a variable has been found */
+#define MAXLINE 1000    /* max size of line string */
 
 int getop(char []);
+int getop2(char []);
 void push(double);
 double pop(void);
 
@@ -22,7 +24,7 @@ int main(void) {
         double vars[26];
         double last;
 
-        while ((type = getop(s)) != EOF) {
+        while ((type = getop2(s)) != EOF) {
                 switch (type) {
                 case NUMBER:
                         push(atof(s));
@@ -117,6 +119,10 @@ double pop(void) {
 
 int getch(void);
 void ungetch(int);
+int get_line(char s[], int lim);
+
+char line[MAXLINE];
+int li = 0;             /* current line position */
 
 int getop(char s[]) {
         int i, c;
@@ -154,6 +160,72 @@ int getop(char s[]) {
         if (c != EOF)
                 ungetch(c);
         return NUMBER;
+}
+
+int getop2(char s[]) {
+        int i, c;
+
+        if (line[li] == '\0') {
+                if (get_line(line, MAXLINE) == 0) {
+                        return EOF;
+                } else {
+                        li = 0;
+                }
+        }
+
+        while ((s[0] = c = line[li++]) == ' ' || c == '\t')
+                ;
+        s[1] = '\0';
+        if (!isdigit(c) && c != '.' && c != '-' && !isalpha(c)) {
+                return c;       /* not a number or - */
+        }
+        i = 0;
+        if (c == '-') {
+                if (!isdigit(line[li]) && line[li] != '.') {
+                        return '-';
+                } else {
+                        s[++i] = c;
+                }
+        }
+        if (isalpha(c)) {        /* collect letter part */
+                while (isalpha(s[++i] = c = line[li++]))
+                        ;
+                s[i] = '\0';
+                if (c != EOF)
+                        li--;
+                return (i == 1) ? VARIABLE : NAME;
+        }
+        if (isdigit(c))         /* collect integer part */
+                while (isdigit(s[++i] = c = line[li++]))
+                        ;
+        if (c == '.')           /* collect fraction part */
+                while (isdigit(s[++i] = c = line[li++]))
+                        ;
+        s[i] = '\0';
+        if (c != EOF)
+                li--;
+        return NUMBER;
+}
+
+/* get_line: read a line into s, return length */
+int get_line(char s[], int lim)
+{
+        int c, i;
+
+        for (i=0; (c=getchar())!=EOF && c!='\n'; ++i) {
+                if (i < lim - 1)
+                        s[i] = c;
+        }
+        if (c == '\n') {
+                if (i < lim - 1)
+                        s[i] = c;
+                ++i;
+        }
+        if (i < lim - 1)
+                s[i] ='\0';
+        else
+                s[lim - 1] = '\0';
+        return i;
 }
 
 /* getch and ungetch */
