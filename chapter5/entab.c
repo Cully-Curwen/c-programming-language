@@ -4,9 +4,10 @@
 
 #define MAXLINE 1000                 /* maximum length length */
 #define TABWIDTH 8
+#define TABSTART 0
 
 int get_line(char s[], int lim);
-void add_tabs(char s[], int len, int tabwidth, int lim);
+void add_tabs(char *s, int len, int tabwidth, int tabstart, int lim);
 
 /* get a line
  * find blacks and replace with tabs
@@ -16,13 +17,39 @@ int main(int argc, char *argv[]) {
         int len;
         char line[MAXLINE];
         int tabwidth = TABWIDTH;
+        int tabstart = TABSTART;
 
-        if (argc > 1 && isdigit(*(*++argv)))
-                tabwidth = atoi(*argv);
-
+        while (--argc > 0) {
+                switch (**++argv) {
+                case '-':
+                        if (isdigit(*++*argv)) {
+                                tabstart = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                case '+':
+                        if (isdigit(*++*argv)) {
+                                tabwidth = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                default:
+                        if (isdigit(**argv)) {
+                                tabwidth = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                }
+        }
 
         while ((len = get_line(line, MAXLINE)) > 0) {
-                add_tabs(line, len, tabwidth, MAXLINE);
+                add_tabs(line, len, tabwidth, tabstart, MAXLINE);
                 printf("%s", line);
         }
 
@@ -49,46 +76,51 @@ int get_line(char s[], int lim) {
  * then add max tabs and blanks
  * single blanks not replaced by a tab
  */
-void add_tabs(char s[], int len, int tabwidth, int lim) {
-        int i, j, c;
-        int column, count, tabs, blanks;
-        char copy[MAXLINE];
+void add_tabs(char *s, int len, int tabwidth, int tabstart, int lim) {
+        int col = 0, dif = 0;
+        int tabs, blanks;
+        char *sb = s;
+        char copy[MAXLINE], *cp = copy, *cpb = cp;
 
         /* loop through s, when ' ' enter while
          * while ' ' ++blanks, and ++i
          * on exit write tabs and blanks to copy, update j
          * copy char, set blanks to 0
          */
-        for (i = j = column = count = 0; i < len; ++i) {
-                while (s[i] == ' ' || s[i] == '\t') {
-                        if (s[i] == ' ')
-                                ++count;
-                        else if (s[i] == '\t')
-                                count = count + tabwidth;
-                        ++i;
-                }
-                if (count > 1) {
-                        for(tabs = column/tabwidth; tabs < (column+count)/tabwidth; ++tabs) {
-                                copy[j] = '\t';
-                                ++j;
+        while (*s) {
+                for (dif = 0; col >= tabstart && (*s == ' ' || *s == '\t'); s++) {
+                        if (*s == ' ') {
+                                dif++;
                         }
-                        for(blanks = 0; blanks < (column+count)%tabwidth; ++blanks) {
-                                copy[j] = ' ';
-                                ++j;
+                        if (*s == '\t') {
+                                dif += tabwidth - (col + dif) % tabwidth;
                         }
-                } else if (count == 1) {
-                        copy[j] = ' ';
-                        ++j;
                 }
-                copy[j] = s[i];
-                ++j;
-                column = column + count + 1;
-                count = 0;
+                int target = col + dif;
+                if (dif > 1) {
+                        for(tabs = col / tabwidth; tabs < target / tabwidth; ++tabs) {
+                                *cp++ = '\t';
+                                col += tabwidth - col % tabwidth;
+                        }
+                        for(blanks = 0; blanks < target % tabwidth; ++blanks) {
+                                *cp++ = ' ';
+                                col++;
+                        }
+                } else if (dif == 1) {
+                        *cp++ = ' ';
+                        col++;
+                }
+                if (*s) {
+                        *cp++ = *s;
+                        col++;
+                        s++;
+                }
         }
+        *cp = '\0';
 
         /* copy replace s */
-        for (c = 0; c < j && c < lim - 1; ++c)
-                s[c] = copy[c];
-        s[c] = '\0';
+        while (*cpb)
+                *sb++ = *cpb++;
+        *sb = '\0';
 }
 

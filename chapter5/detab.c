@@ -4,9 +4,10 @@
 
 #define MAXLINE 1000                 /* maximum length length */
 #define TABWIDTH 8
+#define TABSTART 0
 
 int get_line(char s[], int lim);
-void replace_tab(char s[], int len, int tabwidth, int lim);
+void replace_tab(char *, int len, int tabwidth, int tabstart, int lim);
 
 /* get a line
  * find tabs and replace with blanks
@@ -17,13 +18,40 @@ int main(int argc, char *argv[]) {
         int len;
         char line[MAXLINE];
         int tabwidth = TABWIDTH;
+        int tabstart = TABSTART;
 
-        if (argc > 1 && isdigit(*(*++argv)))
-                tabwidth = atoi(*argv);
+        while (--argc > 0) {
+                switch (**++argv) {
+                case '-':
+                        if (isdigit(*++*argv)) {
+                                tabstart = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                case '+':
+                        if (isdigit(*++*argv)) {
+                                tabwidth = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                default:
+                        if (isdigit(**argv)) {
+                                tabwidth = atoi(*argv);
+                        } else {
+                                printf("entab: illegal option %c", **argv);
+                                return -1;
+                        }
+                        break;
+                }
+        }
 
 
         while ((len = get_line(line, MAXLINE)) > 0) {
-                replace_tab(line, len, tabwidth, MAXLINE);
+                replace_tab(line, len, tabwidth, tabstart, MAXLINE);
                 printf("%s", line);
         }
 
@@ -46,24 +74,29 @@ int get_line(char s[], int lim) {
 }
 
 /* replace tabs with blanks */
-void replace_tab(char s[], int len, int tabwidth, int lim) {
-        int i, j, c;
-        char copy[MAXLINE];
+void replace_tab(char *s, int len, int tabwidth, int tabstart, int lim) {
+        int col, dif;
+        char *sb = s, copy[MAXLINE], *cp = copy, *cpb = cp;
 
-        for (i = j = 0; i < len && j < lim - 1; ++i) {
-                if (s[i] == '\t') {
-                        for (int dif = j % tabwidth; dif < tabwidth && j < lim - 1; ++dif) {
-                                copy[j] = ' ';
-                                ++j;
+
+        for (col = 0; *s && col < lim-1; s++) {
+                if (*s == '\t' && col >= tabstart) {
+                        for (dif = col % tabwidth; dif < tabwidth && col < lim-1; ++dif) {
+                                *cp++ = ' ';
+                                col++;
                         }
+                } else if (*s == '\t') {
+                        *cp++ = *s;
+                        col += tabwidth - col % tabwidth;
                 } else {
-                        copy[j] = s[i];
-                        ++j;
+                        *cp++ = *s;
+                        col++;
                 }
         }
+        *cp = '\0';
 
         /* copy replace s */
-        for (c = 0; c < j && c < lim - 1; ++c)
-                s[c] = copy[c];
-        s[c] = '\0';
+        while (*cpb)
+                *sb++ = *cpb++;
+        *sb = '\0';
 }
