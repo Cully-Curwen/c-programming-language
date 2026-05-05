@@ -26,8 +26,10 @@ int getline_(char *s, int lim) {
 
         for (i=0; i<lim && (c=getchar()) &&  c!='\n' && c!=EOF; i++)
                 *s++ = c;
-        *s++ = '\n';
-        i++;
+        if (c == '\n') {
+                *s++ = '\n';
+                i++;
+        }
         *s = '\0';
 
         return i;
