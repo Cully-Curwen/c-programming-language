@@ -10,10 +10,12 @@ void writelines(char *lineptr[], int nlines);
 void qsort_(void *lineptr[], int left, int right, int (*comp)(void *, void *));
 int numcmp(const char *, const char *);
 int strcmp_flags(const char *, const char *);
+int fieldcmp(const char *, const char *);
 
 int direction = 1;      /* -1 if reverse sort */
 int fcase = 0;          /* 1 if fold upper and lower case */
 int dcase = 0;          /* 1 if directory order */
+char **fieldptr;         /* ptr to option 'k' to sort field */
 
 /* sort input lines */
 int main(int argc, char *argv[]) {
@@ -38,11 +40,32 @@ int main(int argc, char *argv[]) {
                                 comp = (int (*)(void *, void *))strcmp_flags;
                                 dcase = 1;
                                 break;
+                        case 'k':
+                                comp = (int (*)(void *, void *))fieldcmp;
+                                fieldptr = argv;
+                                goto done;
+                        case 'h':
                         default:
+                                printf("sort: [option] [field options]\n"
+                                                "options:\n"
+                                                "'-n'    compare numerically\n"
+                                                "'-r'    reverse sort order\n"
+                                                "'-f'    fold upper and lower case together to compare\n"
+                                                "'-d'    directory search\n"
+                                                "'-k'    field search\n"
+                                                "'-h'    help\n"
+                                                "field search options: digits then optional options '-':\n"
+                                                "[0-9]   field to search\n"
+                                                "'-r'\n"
+                                                "'-f'\n"
+                                                "'-d'\n"
+                                      );
+                                return -1;
                                 break;
                         }
                 }
         }
+        done:
 
         if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
                 qsort_((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))comp);
@@ -142,6 +165,104 @@ int strcmp_flags(const char *s1, const char *s2) {
         }
 
         result = (fcase) ? toupper(*s1) - toupper(*s2) : *s1 - *s2;
+        if (result == 0)
+                return strcmp(s1b, s2b);
+        else
+                return result;
+}
+
+/* fieldcmp: compare of fields split by blanks
+ * pulls option from argv[]
+ * uses fieldptr to start loop through argv[]
+ * first arg set field
+ * second if letter sets options
+ * if equal loop through later fields
+ * at end if still equal strcmp
+ */
+int fieldcmp(const char *s1, const char *s2) {
+        const char *s1b = s1, *s2b = s2;
+        char **fieldp = fieldptr + 1;
+        int field;          /* field to search on [1 indexed] */
+        int result = 0;
+
+        while (*fieldp && isdigit(**fieldp)) {
+                field = atoi(*fieldp);
+                int direction = 1;      /* -1 if reverse sort */
+                int numeric = 0;        /* 1 if numeric sort */
+                int fcase = 0;          /* 1 if fold upper and lower case */
+                int dcase = 0;          /* 1 if directory order */
+
+                /* options */
+                while (*++fieldp && **fieldp == '-') {
+                        char *p = *fieldp;
+                        while (*++p) {
+                                switch (*p) {
+                                case 'n':
+                                        numeric = 1;
+                                        break;
+                                case 'r':
+                                        direction = -1;
+                                        break;
+                                case 'f':
+                                        fcase = 1;
+                                        break;
+                                case 'd':
+                                        dcase = 1;
+                                        break;
+                                default:
+                                        break;
+                                }
+                        }
+                }
+
+                /* field sort logic */
+                s1 = s1b; s2 = s2b;     /* reset pointers to base of strings */
+                int i = 1;
+                while (*s1 && i < field) {
+                        if (isspace(*s1)) {
+                                i++;
+                                while (isspace(*s1))
+                                        s1++;
+                        } else {
+                                s1++;
+                        }
+                }
+                i = 1;
+                while (*s2 && i < field) {
+                        if (isspace(*s2)) {
+                                i++;
+                                while (isspace(*s2))
+                                        s2++;
+                        } else {
+                                s2++;
+                        }
+                }
+
+                if (numeric) {
+                        result = direction * numcmp(s1, s2);
+                        if (result != 0)
+                                goto done;
+                }
+                while (*s1 && *s2 && !isspace(*s1) && !isspace(*s2)) {
+                        while (dcase && *s1 && !isspace(*s1) && !isalnum(*s1))
+                                s1++;
+                        while (dcase && *s2 && !isspace(*s2) && !isalnum(*s2))
+                                s2++;
+                        if (!*s1 || !*s2) /* either is '\0' */
+                                break;
+                        if (fcase)
+                                result = toupper(*s1) - toupper(*s2);
+                        else if (!fcase)
+                                result = *s1 - *s2;
+                        if ((result *= direction) != 0)
+                                goto done;
+                        s1++;
+                        s2++;
+                }
+        }
+
+        done:
+
         if (result == 0)
                 return strcmp(s1b, s2b);
         else
