@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -9,28 +10,40 @@ void writelines(char *lineptr[], int nlines);
 
 void qsort_(void *lineptr[], int left, int right, int (*comp)(void *, void *), int direction);
 int numcmp(const char *, const char *);
+int strcmpfold(const char *, const char *);
+
+int (*comp[])(void *, void *) = {
+	(int (*)(void *, void *)) strcmp,
+	(int (*)(void *, void *)) numcmp,
+	(int (*)(void *, void *)) strcmpfold,
+};
 
 /* sort input lines */
 int main(int argc, char *argv[]) {
         int nlines;             /* number of input lines read */
-        int numeric = 0;        /* 1 if numeric sort */
         int direction = 1;        /* -1 if reverse sort */
+        int (*comp)(void *, void *);
 
+        comp = (int (*)(void *, void *))strcmp;
         while (--argc > 0 && **++argv == '-') {
                 while (*++*argv) {
                         switch (**argv) {
                         case 'n':
-                                numeric = 1;
+                                comp = (int (*)(void *,void *))numcmp;
                                 break;
                         case 'r':
                                 direction = -1;
+                                break;
+                        case 'f':
+                                comp = (int (*)(void *, void *))strcmpfold;
+                        default:
                                 break;
                         }
                 }
         }
 
         if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-                qsort_((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))(numeric ? numcmp : strcmp), direction);
+                qsort_((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))comp, direction);
                 writelines(lineptr, nlines);
                 return 0;
         } else {
@@ -98,6 +111,25 @@ int numcmp(const char *s1, const char *s2) {
                 return 1;
         else
                 return 0;
+}
+
+/* strcmpfold: compare s1 and s2 with same case
+ * if same, then checks with strcmp so order is standard
+ * if s1 > s2 return >0, if s1 < s2 retrun <0
+ */
+int strcmpfold(const char *s1, const char *s2) {
+        const char *s1b = s1, *s2b = s2;
+        int result;
+
+        while (*s1 && *s2 && toupper(*s1) == toupper(*s2)) {
+                s1++;
+                s2++;
+        }
+        result = toupper(*s1) - toupper(*s2);
+        if (result == 0)
+                return strcmp(s1b, s2b);
+        else
+                return result;
 }
 
 void swap(void *v[], int i, int j) {
