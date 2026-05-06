@@ -7,21 +7,17 @@ char *lineptr[MAXLINES];        /* pointers to text lines */
 
 int readlines(char *lineptr[], int nlines);
 void writelines(char *lineptr[], int nlines);
-
-void qsort_(void *lineptr[], int left, int right, int (*comp)(void *, void *), int direction);
+void qsort_(void *lineptr[], int left, int right, int (*comp)(void *, void *));
 int numcmp(const char *, const char *);
-int strcmpfold(const char *, const char *);
+int strcmp_flags(const char *, const char *);
 
-int (*comp[])(void *, void *) = {
-	(int (*)(void *, void *)) strcmp,
-	(int (*)(void *, void *)) numcmp,
-	(int (*)(void *, void *)) strcmpfold,
-};
+int direction = 1;      /* -1 if reverse sort */
+int fcase = 0;          /* 1 if fold upper and lower case */
+int dcase = 0;          /* 1 if directory order */
 
 /* sort input lines */
 int main(int argc, char *argv[]) {
         int nlines;             /* number of input lines read */
-        int direction = 1;        /* -1 if reverse sort */
         int (*comp)(void *, void *);
 
         comp = (int (*)(void *, void *))strcmp;
@@ -35,7 +31,13 @@ int main(int argc, char *argv[]) {
                                 direction = -1;
                                 break;
                         case 'f':
-                                comp = (int (*)(void *, void *))strcmpfold;
+                                comp = (int (*)(void *, void *))strcmp_flags;
+                                fcase = 1;
+                                break;
+                        case 'd':
+                                comp = (int (*)(void *, void *))strcmp_flags;
+                                dcase = 1;
+                                break;
                         default:
                                 break;
                         }
@@ -43,7 +45,7 @@ int main(int argc, char *argv[]) {
         }
 
         if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-                qsort_((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))comp, direction);
+                qsort_((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))comp);
                 writelines(lineptr, nlines);
                 return 0;
         } else {
@@ -81,7 +83,7 @@ void writelines(char *lineptr[], int nlines)
 }
 
 /* qsort: sort v[left]...v[right] into increasing order */
-void qsort_(void *v[], int left, int right, int (*comp)(void *, void *), int direction) {
+void qsort_(void *v[], int left, int right, int (*comp)(void *, void *)) {
         int i, last;
         void swap(void *v[], int, int);
 
@@ -93,8 +95,8 @@ void qsort_(void *v[], int left, int right, int (*comp)(void *, void *), int dir
                 if ((*comp)(v[i], v[left]) * direction < 0)
                         swap(v, ++last, i);
         swap(v, left, last);
-        qsort_(v, left, last-1, comp, direction);
-        qsort_(v, last+1, right, comp, direction);
+        qsort_(v, left, last-1, comp);
+        qsort_(v, last+1, right, comp);
 }
 
 #include <stdlib.h>
@@ -113,19 +115,33 @@ int numcmp(const char *s1, const char *s2) {
                 return 0;
 }
 
-/* strcmpfold: compare s1 and s2 with same case
+/* strcmp_flags: compare s1 and s2
+ * with fcase flag fold upper and lower case
+ * with dcase only compare blanks, numbers, letters
  * if same, then checks with strcmp so order is standard
  * if s1 > s2 return >0, if s1 < s2 retrun <0
  */
-int strcmpfold(const char *s1, const char *s2) {
+int strcmp_flags(const char *s1, const char *s2) {
         const char *s1b = s1, *s2b = s2;
         int result;
 
-        while (*s1 && *s2 && toupper(*s1) == toupper(*s2)) {
+        while (*s1 && *s2) {
+                while (dcase && *s1 && !isspace(*s1) && !isalnum(*s1))
+                        s1++;
+                while (dcase && *s2 && !isspace(*s2) && !isalnum(*s2))
+                        s2++;
+
+                if (fcase && toupper(*s1) != toupper(*s2))
+                        break;
+                else if (!fcase && *s1 != *s2)
+                        break;
+                else if (!*s1 || !*s2)
+                        break;
                 s1++;
                 s2++;
         }
-        result = toupper(*s1) - toupper(*s2);
+
+        result = (fcase) ? toupper(*s1) - toupper(*s2) : *s1 - *s2;
         if (result == 0)
                 return strcmp(s1b, s2b);
         else
