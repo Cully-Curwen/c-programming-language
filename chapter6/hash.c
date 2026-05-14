@@ -110,38 +110,37 @@ void undef(char *s) {
         return;
 }
 
-/* --- main: small demo -------------------------------------------------- */
-int main(void)
-{
-    struct nlist *p;
-
-    /* Install some definitions (like #define in C) */
-    install("IN",   "1");
-    install("OUT",  "0");
-    install("YES",  "1");
-    install("NO",   "0");
-    install("MAX",  "100");
-
-    /* Look one up and print it */
-    if ((p = lookup("MAX")) != NULL)
-        printf("MAX  -> %s\n", p->defn);
-    else
-        printf("MAX not found\n");
-
-    /* Re-define an existing entry */
-    install("MAX", "9999");
-    if ((p = lookup("MAX")) != NULL)
-        printf("MAX (redefined) -> %s\n", p->defn);
-
-    undef("MAX");
-    if ((p = lookup("MAX")) != NULL)
-            printf("MAX -> %s\n", p->defn);
-    else
-            printf("MAX not found\n");
-
-    /* Try a name that was never installed */
-    if (lookup("MISSING") == NULL)
-        printf("MISSING -> (not found)\n");
-
-    return 0;
-}
+// int main(void)
+// {
+//     struct nlist *p;
+//
+//     /* Install some definitions (like #define in C) */
+//     install("IN",   "1");
+//     install("OUT",  "0");
+//     install("YES",  "1");
+//     install("NO",   "0");
+//     install("MAX",  "100");
+//
+//     /* Look one up and print it */
+//     if ((p = lookup("MAX")) != NULL)
+//         printf("MAX  -> %s\n", p->defn);
+//     else
+//         printf("MAX not found\n");
+//
+//     /* Re-define an existing entry */
+//     install("MAX", "9999");
+//     if ((p = lookup("MAX")) != NULL)
+//         printf("MAX (redefined) -> %s\n", p->defn);
+//
+//     undef("MAX");
+//     if ((p = lookup("MAX")) != NULL)
+//             printf("MAX -> %s\n", p->defn);
+//     else
+//             printf("MAX not found\n");
+//
+//     /* Try a name that was never installed */
+//     if (lookup("MISSING") == NULL)
+//         printf("MISSING -> (not found)\n");
+//
+//     return 0;
+// }

@@ -36,7 +36,7 @@ int getword(char *word, int lim) {
                         c = '/';
                 }
         }
-        if (!isalpha(c) && c != '_') {
+        if (!isalnum(c) && c != '_') {
                 *w = '\0';
                 return c;
         }
