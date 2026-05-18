@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-/* minscanf: minimal printf with variable argument list */
+/* minscanf: minimal scanf with variable argument list */
 void minscanf(char *fmt, ...) {
         va_list ap;    /* points to each unnamed arg in turn */
         char *p, *sp, *cp, c;
